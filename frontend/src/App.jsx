@@ -39,7 +39,7 @@ function App() {
 
       <Route path="/admin" element={<AdminProtectedRoute />}>
         <Route element={<Dashboard />}>
-          <Route path="dashboard" element={<Overview />} />
+          <Route path="overview" element={<Overview />} />
           <Route path="posts" element={<AllPosts />} />
           <Route path="posts/create" element={<CreatePostAdmin />} />
           <Route path="posts/edit/:id" element={<EditPost />} />

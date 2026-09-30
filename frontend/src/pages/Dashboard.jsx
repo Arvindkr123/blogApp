@@ -136,7 +136,7 @@ const Dashboard = () => {
             {/* Overview */}
             <button
               onClick={() => {
-                navigate("/admin");
+                navigate("/admin/overview");
                 setSidebarOpen(false);
               }}
               className="
