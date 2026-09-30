@@ -6,6 +6,13 @@ import Dashboard from "./pages/Dashboard.jsx";
 import CreatePost from "./pages/CreatePost.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import SinglePost from "./pages/SinglePost.jsx";
+import AdminProtectedRoute from './components/AdminProtectedRoute';
+import Overview from './pages/admin/Overview';
+import AllPosts from './pages/admin/AllPosts';
+import CreatePostAdmin from './pages/admin/CreatePost.jsx';
+import EditPost from './pages/admin/EditPost';
+import AdminUsers from './pages/admin/AllUsers';
+import AddUserByAdmin from './pages/admin/AddUser';
 function App() {
 
   return (
@@ -15,11 +22,6 @@ function App() {
       </ProtectedRoute>} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Register />} />
-      <Route path="/admin/dashboard" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
       <Route path="/posts/create" element={
         <ProtectedRoute>
           <CreatePost />
@@ -33,6 +35,19 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+
+      <Route path="/admin" element={<AdminProtectedRoute />}>
+        <Route element={<Dashboard />}>
+          <Route path="dashboard" element={<Overview />} />
+          <Route path="posts" element={<AllPosts />} />
+          <Route path="posts/create" element={<CreatePostAdmin />} />
+          <Route path="posts/edit/:id" element={<EditPost />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="users/create" element={<AddUserByAdmin />} />
+        </Route>
+      </Route>
+
     </Routes>
   )
 }
