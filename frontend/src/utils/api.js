@@ -21,6 +21,18 @@ export const signUpapi = async (userData) => {
     }
 };
 
+export const logoutApi = async () => {
+  const response = await axios.post(
+    `${BASE_URL}/auth/logout`,
+    {},
+    {
+      withCredentials: true,
+    }
+  );
+
+  return response.data;
+};
+
 export const checkAuthApi = async () => {
     const res = await axios.get(`${BASE_URL}/auth/me`, {
         withCredentials: true // Mandatory for sending HTTP-only cookies

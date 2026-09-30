@@ -2,6 +2,7 @@ import {
   Bookmark,
   ChevronRight,
   Clock,
+  LogOut,
   Plus,
   Search,
   TrendingUp,
@@ -9,9 +10,9 @@ import {
 
 import { useEffect, useState } from "react";
 import AdSlot from "../components/ads/AdSlot";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/useUser";
-import { getPostsApi } from "../utils/api";
+import { getPostsApi, logoutApi } from "../utils/api";
 
 const CATEGORIES = [
   "All",
@@ -28,8 +29,9 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [savedPosts, setSavedPosts] = useState({});
+  const navigate = useNavigate();
 
-  const { user } = useUser();
+  const { user, setUser } = useUser();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -78,6 +80,19 @@ const Home = () => {
     return matchesCategory && matchesSearch;
   });
 
+  const handleLogout = async () => {
+  try {
+    await logoutApi();
+
+    setUser(null);
+    localStorage.removeItem("user");
+
+    navigate("/login");
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+};
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900">
 
@@ -103,33 +118,25 @@ const Home = () => {
               >
                 Feed
               </Link>
-
-              <a
-                href="#popular"
-                className="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-50 transition"
-              >
-                Popular
-              </a>
-
-              <a
-                href="#topics"
-                className="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-50 transition"
-              >
-                Topics
-              </a>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
 
             {user && (
-              <Link
-                to="/posts/create"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 px-3.5 py-1.5 rounded-md transition"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Create Post
-              </Link>
+              <>
+                <Link
+                  to="/posts/create"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 px-3.5 py-1.5 rounded-md transition"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Post
+                </Link>
+                <button onClick={handleLogout}  className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition">
+                  <LogOut size={20} />
+                  Logout
+                </button>
+              </>
             )}
 
             {!user ? (
@@ -179,11 +186,10 @@ const Home = () => {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`text-xs font-medium px-3 py-1.5 rounded-md whitespace-nowrap transition-colors ${
-                  selectedCategory === cat
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
+                className={`text-xs font-medium px-3 py-1.5 rounded-md whitespace-nowrap transition-colors ${selectedCategory === cat
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
               >
                 {cat}
               </button>
@@ -304,11 +310,10 @@ const Home = () => {
                       {/* Bookmark */}
                       <button
                         onClick={() => toggleBookmark(post._id)}
-                        className={`p-1.5 rounded hover:bg-slate-100 transition ${
-                          savedPosts[post._id]
-                            ? "text-indigo-600"
-                            : "text-slate-400"
-                        }`}
+                        className={`p-1.5 rounded hover:bg-slate-100 transition ${savedPosts[post._id]
+                          ? "text-indigo-600"
+                          : "text-slate-400"
+                          }`}
                         title="Save article"
                       >
                         <Bookmark className="w-3.5 h-3.5" />

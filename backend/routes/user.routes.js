@@ -35,5 +35,18 @@ router.get("/me", verifyToken, async (req, res) => {
     });
   }
 });
+router.get("/logout", verifyToken, (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Logout successful",
+  });
+});
+
 
 export default router;

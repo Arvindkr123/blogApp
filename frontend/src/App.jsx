@@ -5,6 +5,7 @@ import Home from "./pages/Home.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import CreatePost from "./pages/CreatePost.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import SinglePost from "./pages/SinglePost.jsx";
 function App() {
 
   return (
@@ -24,6 +25,14 @@ function App() {
           <CreatePost />
         </ProtectedRoute>
       } />
+      <Route
+        path="/posts/:id"
+        element={
+          <ProtectedRoute>
+            <SinglePost />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   )
 }

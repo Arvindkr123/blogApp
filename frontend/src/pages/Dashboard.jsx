@@ -1,220 +1,773 @@
 import {
-    BarChart2,
-    Bell,
-    DollarSign,
-    Home,
-    LogOut,
-    Menu,
-    Search,
-    Settings,
-    ShoppingBag,
-    TrendingUp,
-    Users,
-    X
-} from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+  BarChart3,
+  Bell,
+  FileText,
+  Home,
+  LogOut,
+  Menu,
+  Plus,
+  Search,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
+
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
+import { useUser } from "../context/useUser";
+import { getAllPostsAdminApi } from "../utils/postApi";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user, setUser } = useUser();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Retrieve logged-in user from localStorage or fallback
-  const user = JSON.parse(localStorage.getItem('user')) || {
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'Admin'
+  // =========================
+  // Fetch posts
+  // =========================
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+
+        const response = await getAllPostsAdminApi();
+
+        if (response.success) {
+          setPosts(response.posts || []);
+        }
+      } catch (error) {
+        console.error("Dashboard posts error:", error);
+
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  // =========================
+  // Logout
+  // =========================
+  const handleLogout = async () => {
+    try {
+      // If you already have logoutApi(), call it here.
+      // await logoutApi();
+
+      localStorage.removeItem("user");
+
+      if (setUser) {
+        setUser(null);
+      }
+
+      toast.info("Logged out successfully");
+
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout failed");
+    }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    toast.info('Logged out successfully');
-    navigate('/login');
-  };
+  // =========================
+  // Admin protection
+  // =========================
+  if (!user) {
+    return null;
+  }
 
+  if (user.role !== "Admin") {
+    navigate("/");
+    return null;
+  }
+
+  // =========================
+  // Dashboard statistics
+  // =========================
   const stats = [
-    { title: 'Total Revenue', value: '$45,231.89', change: '+20.1%', icon: DollarSign, color: 'bg-blue-500' },
-    { title: 'Active Users', value: '+2,350', change: '+180.1%', icon: Users, color: 'bg-emerald-500' },
-    { title: 'Sales', value: '+12,234', change: '+19%', icon: ShoppingBag, color: 'bg-purple-500' },
-    { title: 'Performance', value: '+573', change: '+201', icon: TrendingUp, color: 'bg-amber-500' },
+    {
+      title: "Total Posts",
+      value: posts.length,
+      description: "All blog posts",
+      icon: FileText,
+      color: "bg-blue-500",
+    },
+    {
+      title: "Total Users",
+      value: "—",
+      description: "Registered users",
+      icon: Users,
+      color: "bg-emerald-500",
+    },
+    {
+      title: "Published Posts",
+      value: posts.length,
+      description: "Currently published",
+      icon: BarChart3,
+      color: "bg-purple-500",
+    },
+    {
+      title: "Categories",
+      value: new Set(posts.map((post) => post.category)).size,
+      description: "Post categories",
+      icon: FileText,
+      color: "bg-amber-500",
+    },
   ];
 
-  const recentTransactions = [
-    { id: 'TX-1001', user: 'Olivia Martin', email: 'olivia@email.com', amount: '+$1,999.00', status: 'Completed', date: '2026-09-28' },
-    { id: 'TX-1002', user: 'Jackson Lee', email: 'jackson@email.com', amount: '+$39.00', status: 'Completed', date: '2026-09-27' },
-    { id: 'TX-1003', user: 'Isabella Nguyen', email: 'isabella@email.com', amount: '+$299.00', status: 'Pending', date: '2026-09-26' },
-    { id: 'TX-1004', user: 'William Kim', email: 'will@email.com', amount: '+$99.00', status: 'Completed', date: '2026-09-25' },
-    { id: 'TX-1005', user: 'Sofia Davis', email: 'sofia@email.com', amount: '+$39.00', status: 'Failed', date: '2026-09-24' },
-  ];
+  // =========================
+  // Latest posts
+  // =========================
+  const recentPosts = posts.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 flex flex-col md:flex-row">
-      {/* Mobile Sidebar Overlay */}
+    <div className="min-h-screen bg-slate-50 flex">
+
+      {/* =========================
+          Mobile Overlay
+      ========================= */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-neutral-800 border-r border-slate-200 dark:border-neutral-700 flex flex-col justify-between transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-200 ease-in-out`}>
+      {/* =========================
+          Sidebar
+      ========================= */}
+      <aside
+        className={`
+          fixed md:static
+          inset-y-0 left-0
+          z-50
+          w-64
+          bg-white
+          border-r border-slate-200
+          flex flex-col justify-between
+          transform
+          ${
+            sidebarOpen
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
+          md:translate-x-0
+          transition-transform duration-200
+        `}
+      >
+
+        {/* Sidebar Top */}
         <div>
-          {/* Logo Section */}
-          <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-neutral-700">
-            <div className="flex items-center space-x-3">
-              <img src="https://readymadeui.com/logo-alt.svg" alt="logo" className="w-8 h-8" />
-              <span className="text-lg font-bold text-slate-900 dark:text-slate-50">Dashboard</span>
+
+          {/* Logo */}
+          <div className="h-16 px-6 flex items-center justify-between border-b border-slate-200">
+
+            <div className="flex items-center gap-3">
+
+              <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+
+              <div>
+                <h1 className="font-bold text-slate-900">
+                  TechStack
+                </h1>
+
+                <p className="text-xs text-slate-500">
+                  Admin Panel
+                </p>
+              </div>
+
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="md:hidden text-slate-500 dark:text-slate-400">
+
+            {/* Mobile Close */}
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden text-slate-500"
+            >
               <X className="w-6 h-6" />
             </button>
+
           </div>
 
-          {/* Nav Links */}
+          {/* Navigation */}
           <nav className="p-4 space-y-1">
-            <a href="#" className="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+
+            {/* Overview */}
+            <button
+              onClick={() => {
+                navigate("/admin");
+                setSidebarOpen(false);
+              }}
+              className="
+                w-full
+                flex items-center gap-3
+                px-3 py-2.5
+                rounded-lg
+                text-sm font-medium
+                bg-blue-50
+                text-blue-600
+              "
+            >
               <Home className="w-5 h-5" />
               <span>Overview</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-neutral-700 transition-colors">
-              <BarChart2 className="w-5 h-5" />
-              <span>Analytics</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-neutral-700 transition-colors">
+            </button>
+
+            {/* All Posts */}
+            <button
+              onClick={() => {
+                navigate("/admin/posts");
+                setSidebarOpen(false);
+              }}
+              className="
+                w-full
+                flex items-center gap-3
+                px-3 py-2.5
+                rounded-lg
+                text-sm font-medium
+                text-slate-600
+                hover:bg-slate-100
+                transition
+              "
+            >
+              <FileText className="w-5 h-5" />
+              <span>All Posts</span>
+            </button>
+
+            {/* Create Post */}
+            <button
+              onClick={() => {
+                navigate("/admin/posts/create");
+                setSidebarOpen(false);
+              }}
+              className="
+                w-full
+                flex items-center gap-3
+                px-3 py-2.5
+                rounded-lg
+                text-sm font-medium
+                text-slate-600
+                hover:bg-slate-100
+                transition
+              "
+            >
+              <Plus className="w-5 h-5" />
+              <span>Create Post</span>
+            </button>
+
+            {/* Users */}
+            <button
+              onClick={() => {
+                navigate("/admin/users");
+                setSidebarOpen(false);
+              }}
+              className="
+                w-full
+                flex items-center gap-3
+                px-3 py-2.5
+                rounded-lg
+                text-sm font-medium
+                text-slate-600
+                hover:bg-slate-100
+                transition
+              "
+            >
               <Users className="w-5 h-5" />
-              <span>Customers</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-neutral-700 transition-colors">
-              <Settings className="w-5 h-5" />
-              <span>Settings</span>
-            </a>
+              <span>All Users</span>
+            </button>
+
+            {/* Add User */}
+            <button
+              onClick={() => {
+                navigate("/admin/users/create");
+                setSidebarOpen(false);
+              }}
+              className="
+                w-full
+                flex items-center gap-3
+                px-3 py-2.5
+                rounded-lg
+                text-sm font-medium
+                text-slate-600
+                hover:bg-slate-100
+                transition
+              "
+            >
+              <UserPlus className="w-5 h-5" />
+              <span>Add User</span>
+            </button>
+
           </nav>
+
         </div>
 
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-slate-200 dark:border-neutral-700">
+        {/* =========================
+            User Section
+        ========================= */}
+        <div className="p-4 border-t border-slate-200">
+
           <div className="flex items-center justify-between mb-4 px-2">
-            <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user.name}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+
+            <div className="min-w-0">
+
+              <p className="text-sm font-semibold text-slate-900 truncate">
+                {user.name}
+              </p>
+
+              <p className="text-xs text-slate-500 truncate">
+                {user.email}
+              </p>
+
             </div>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              {user.role}
+
+            <span className="
+              ml-2
+              text-xs
+              font-semibold
+              px-2
+              py-1
+              rounded
+              bg-blue-100
+              text-blue-700
+            ">
+              Admin
             </span>
+
           </div>
-          <button 
+
+          <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-950/50 rounded-lg transition-colors cursor-pointer"
+            className="
+              w-full
+              flex items-center justify-center gap-2
+              px-3 py-2.5
+              text-sm font-medium
+              text-red-600
+              bg-red-50
+              hover:bg-red-100
+              rounded-lg
+              transition
+            "
           >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
           </button>
+
         </div>
+
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Navbar */}
-        <header className="h-16 bg-white dark:bg-neutral-800 border-b border-slate-200 dark:border-neutral-700 flex items-center justify-between px-4 md:px-8">
-          <div className="flex items-center space-x-4">
-            <button 
+      {/* =========================
+          Main Content
+      ========================= */}
+      <div className="flex-1 min-w-0 flex flex-col">
+
+        {/* =========================
+            Top Navbar
+        ========================= */}
+        <header className="
+          h-16
+          bg-white
+          border-b border-slate-200
+          flex items-center justify-between
+          px-4 md:px-8
+        ">
+
+          <div className="flex items-center gap-4">
+
+            {/* Mobile Menu */}
+            <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-neutral-700 rounded-lg"
+              className="
+                md:hidden
+                p-2
+                rounded-lg
+                text-slate-600
+                hover:bg-slate-100
+              "
             >
               <Menu className="w-6 h-6" />
             </button>
+
+            {/* Search */}
             <div className="relative w-48 md:w-80">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Search..."
-                className="w-full pl-9 pr-4 py-1.5 text-sm rounded-lg bg-slate-100 dark:bg-neutral-700 text-slate-900 dark:text-slate-100 border-none focus:outline-none focus:ring-2 focus:ring-blue-600"
+
+              <Search
+                className="
+                  absolute
+                  left-3
+                  top-1/2
+                  -translate-y-1/2
+                  w-4 h-4
+                  text-slate-400
+                "
               />
+
+              <input
+                type="text"
+                placeholder="Search..."
+                className="
+                  w-full
+                  pl-9 pr-4
+                  py-2
+                  text-sm
+                  bg-slate-100
+                  rounded-lg
+                  border-none
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
+              />
+
             </div>
+
           </div>
 
-          <div className="flex items-center space-x-4">
-            <button className="relative p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-neutral-700 rounded-full">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-            </button>
-          </div>
+          {/* Notification */}
+          <button
+            className="
+              relative
+              p-2
+              rounded-full
+              text-slate-600
+              hover:bg-slate-100
+            "
+          >
+            <Bell className="w-5 h-5" />
+
+            <span className="
+              absolute
+              top-1.5
+              right-1.5
+              w-2
+              h-2
+              bg-blue-600
+              rounded-full
+            " />
+          </button>
+
         </header>
 
-        {/* Dashboard Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Welcome back, {user.name}!</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Here is what is happening with your projects today.</p>
+        {/* =========================
+            Dashboard Content
+        ========================= */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+
+          {/* Welcome */}
+          <div className="mb-8">
+
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+              Welcome back, {user.name}!
+            </h1>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your blog, posts and users from here.
+            </p>
+
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat, idx) => {
+          {/* =========================
+              Quick Actions
+          ========================= */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+
+            <button
+              onClick={() => navigate("/admin/posts/create")}
+              className="
+                p-5
+                bg-blue-600
+                hover:bg-blue-700
+                text-white
+                rounded-xl
+                flex items-center justify-between
+                transition
+              "
+            >
+
+              <div className="text-left">
+
+                <p className="font-semibold">
+                  Create New Post
+                </p>
+
+                <p className="text-sm text-blue-100 mt-1">
+                  Write and publish a new article
+                </p>
+
+              </div>
+
+              <Plus className="w-7 h-7" />
+
+            </button>
+
+            <button
+              onClick={() => navigate("/admin/users/create")}
+              className="
+                p-5
+                bg-white
+                hover:bg-slate-50
+                border border-slate-200
+                rounded-xl
+                flex items-center justify-between
+                transition
+              "
+            >
+
+              <div className="text-left">
+
+                <p className="font-semibold text-slate-900">
+                  Add New User
+                </p>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  Create a new user account
+                </p>
+
+              </div>
+
+              <UserPlus className="w-7 h-7 text-blue-600" />
+
+            </button>
+
+          </div>
+
+          {/* =========================
+              Stats
+          ========================= */}
+          <div className="
+            grid
+            grid-cols-1
+            sm:grid-cols-2
+            lg:grid-cols-4
+            gap-4
+            mb-8
+          ">
+
+            {stats.map((stat) => {
+
               const Icon = stat.icon;
+
               return (
-                <div key={idx} className="p-5 bg-white dark:bg-neutral-800 rounded-xl border border-slate-200 dark:border-neutral-700 shadow-xs flex items-center justify-between">
+                <div
+                  key={stat.title}
+                  className="
+                    p-5
+                    bg-white
+                    rounded-xl
+                    border border-slate-200
+                    shadow-sm
+                    flex items-center justify-between
+                  "
+                >
+
                   <div>
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{stat.title}</p>
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-1">{stat.value}</h3>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">{stat.change} from last month</p>
+
+                    <p className="text-sm text-slate-500">
+                      {stat.title}
+                    </p>
+
+                    <h3 className="text-2xl font-bold text-slate-900 mt-1">
+                      {loading ? "..." : stat.value}
+                    </h3>
+
+                    <p className="text-xs text-slate-500 mt-1">
+                      {stat.description}
+                    </p>
+
                   </div>
-                  <div className={`p-3 rounded-lg text-white ${stat.color}`}>
+
+                  <div
+                    className={`
+                      ${stat.color}
+                      p-3
+                      rounded-lg
+                      text-white
+                    `}
+                  >
                     <Icon className="w-6 h-6" />
                   </div>
+
                 </div>
               );
+
             })}
+
           </div>
 
-          {/* Recent Activity Table */}
-          <div className="bg-white dark:bg-neutral-800 rounded-xl border border-slate-200 dark:border-neutral-700 shadow-xs overflow-hidden">
-            <div className="p-5 border-b border-slate-200 dark:border-neutral-700">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Recent Transactions</h2>
+          {/* =========================
+              Recent Posts
+          ========================= */}
+          <div className="
+            bg-white
+            rounded-xl
+            border border-slate-200
+            overflow-hidden
+          ">
+
+            <div className="
+              p-5
+              border-b border-slate-200
+              flex items-center justify-between
+            ">
+
+              <div>
+
+                <h2 className="text-lg font-bold text-slate-900">
+                  Recent Posts
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  Latest articles published on your blog
+                </p>
+
+              </div>
+
+              <button
+                onClick={() => navigate("/admin/posts")}
+                className="
+                  text-sm
+                  font-medium
+                  text-blue-600
+                  hover:text-blue-700
+                "
+              >
+                View All
+              </button>
+
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-                <thead className="bg-slate-50 dark:bg-neutral-700/50 text-slate-700 dark:text-slate-200 font-semibold uppercase text-xs">
-                  <tr>
-                    <th className="px-6 py-3">Transaction ID</th>
-                    <th className="px-6 py-3">Customer</th>
-                    <th className="px-6 py-3">Amount</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-neutral-700">
-                  {recentTransactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-neutral-700/30 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{tx.id}</td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="font-medium text-slate-900 dark:text-slate-100">{tx.user}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{tx.email}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{tx.amount}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                          tx.status === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
-                          tx.status === 'Pending' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' :
-                          'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
-                        }`}>
-                          {tx.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{tx.date}</td>
+
+            {loading ? (
+
+              <div className="p-8 text-center text-slate-500">
+                Loading posts...
+              </div>
+
+            ) : recentPosts.length === 0 ? (
+
+              <div className="p-8 text-center">
+
+                <FileText className="w-10 h-10 mx-auto text-slate-300" />
+
+                <p className="mt-3 text-slate-500">
+                  No posts found
+                </p>
+
+                <button
+                  onClick={() => navigate("/admin/posts/create")}
+                  className="
+                    mt-4
+                    px-4 py-2
+                    bg-blue-600
+                    text-white
+                    rounded-lg
+                    text-sm
+                  "
+                >
+                  Create First Post
+                </button>
+
+              </div>
+
+            ) : (
+
+              <div className="overflow-x-auto">
+
+                <table className="w-full text-left">
+
+                  <thead className="bg-slate-50">
+
+                    <tr>
+
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">
+                        Post
+                      </th>
+
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">
+                        Category
+                      </th>
+
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">
+                        Author
+                      </th>
+
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">
+                        Read Time
+                      </th>
+
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+
+                  </thead>
+
+                  <tbody className="divide-y divide-slate-200">
+
+                    {recentPosts.map((post) => (
+
+                      <tr
+                        key={post._id}
+                        className="hover:bg-slate-50 transition"
+                      >
+
+                        <td className="px-6 py-4">
+
+                          <p className="font-medium text-slate-900">
+                            {post.name}
+                          </p>
+
+                          <p className="text-xs text-slate-500 mt-1 max-w-md truncate">
+                            {post.description}
+                          </p>
+
+                        </td>
+
+                        <td className="px-6 py-4">
+
+                          <span className="
+                            px-2.5
+                            py-1
+                            text-xs
+                            font-medium
+                            rounded-full
+                            bg-blue-50
+                            text-blue-700
+                          ">
+                            {post.category}
+                          </span>
+
+                        </td>
+
+                        <td className="px-6 py-4 text-sm text-slate-600">
+                          {post.createdBy?.name || "Unknown"}
+                        </td>
+
+                        <td className="px-6 py-4 text-sm text-slate-500">
+                          {post.readTime}
+                        </td>
+
+                      </tr>
+
+                    ))}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            )}
+
           </div>
+
         </main>
+
       </div>
+
     </div>
   );
 };
