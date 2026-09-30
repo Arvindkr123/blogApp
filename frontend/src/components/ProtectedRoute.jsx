@@ -15,7 +15,7 @@ const ProtectedRoute = ({ children }) => {
       try {
         const data = await checkAuthApi();
         localStorage.setItem("user", JSON.stringify(data.user));
-        setUser(data)
+        setUser(data.user)
         setLoading(false);
       } catch (err) {
         localStorage.removeItem("user");

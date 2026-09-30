@@ -35,7 +35,7 @@ router.get("/me", verifyToken, async (req, res) => {
     });
   }
 });
-router.get("/logout", verifyToken, (req, res) => {
+router.post("/logout", verifyToken, (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

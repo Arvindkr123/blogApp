@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
-import AdSlot from "../components/ads/AdSlot";
 import { Link, useNavigate } from "react-router-dom";
+import AdSlot from "../components/ads/AdSlot";
 import { useUser } from "../context/useUser";
-import { getPostsApi, logoutApi } from "../utils/api";
+import { getPostByIdApi, logoutApi } from "../utils/api";
 
 const CATEGORIES = [
   "All",
@@ -32,13 +32,12 @@ const Home = () => {
   const navigate = useNavigate();
 
   const { user, setUser } = useUser();
-
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
 
-        const response = await getPostsApi();
+        const response = await getPostByIdApi(user?.id);
 
         console.log("Posts response:", response);
 
