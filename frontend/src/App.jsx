@@ -13,6 +13,7 @@ import CreatePostAdmin from './pages/admin/CreatePost.jsx';
 import EditPost from './pages/admin/EditPost';
 import AdminUsers from './pages/admin/AllUsers';
 import AddUserByAdmin from './pages/admin/AddUser';
+import EditAdminUser from "./pages/admin/EditAdminUser.jsx";
 function App() {
 
   return (
@@ -45,6 +46,7 @@ function App() {
           <Route path="posts/edit/:id" element={<EditPost />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/create" element={<AddUserByAdmin />} />
+          <Route path="users/edit/:id" element={<EditAdminUser />} />
         </Route>
       </Route>
 

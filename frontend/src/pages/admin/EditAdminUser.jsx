@@ -1,63 +1,71 @@
+import  { useEffect, useState } from "react";
 import {
   ArrowLeft,
-  FileText,
+  UserCog,
   Loader2,
   Save,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getPostByIdAdminApi, updatePostAdminApi } from "../../utils/postApi";
 
+import {
+  getAdminUserByIdApi,
+  updateAdminUserApi,
+} from "../../utils/userApi";
 
-const EditPost = () => {
+const EditAdminUser = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
-    category: "",
-    readTime: "",
+    email: "",
+    handle: "",
+    password: "",
+    role: "User",
   });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // ============================================
-  // FETCH POST
+  // FETCH USER
   // ============================================
   useEffect(() => {
-    const fetchPost = async () => {
+    const fetchUser = async () => {
       try {
         setLoading(true);
 
-        const response = await getPostByIdAdminApi(id);
+        const response = await getAdminUserByIdApi(id);
 
-        const post = response.post;
+        const user = response.user;
 
         setFormData({
-          name: post.name || "",
-          description: post.description || "",
-          category: post.category || "",
-          readTime: post.readTime || "",
+          name: user.name || "",
+          email: user.email || "",
+          handle: user.handle || "",
+          password: "",
+          role: user.role || "User",
         });
       } catch (error) {
-        console.error("GET POST ERROR:", error);
+        console.error("GET USER ERROR:", error);
 
         toast.error(
           error.response?.data?.message ||
-            "Failed to fetch post"
+            "Failed to fetch user"
         );
 
-        navigate("/admin/posts");
+        navigate("/admin/users");
       } finally {
         setLoading(false);
       }
     };
 
     if (id) {
-      fetchPost();
+      fetchUser();
     }
   }, [id, navigate]);
 
@@ -78,36 +86,38 @@ const EditPost = () => {
   // ============================================
   const validateForm = () => {
     if (!formData.name.trim()) {
-      toast.error("Post title is required");
+      toast.error("Name is required");
       return false;
     }
 
-    if (formData.name.trim().length < 5) {
+    if (!formData.email.trim()) {
+      toast.error("Email is required");
+      return false;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      toast.error("Please enter a valid email");
+      return false;
+    }
+
+    if (!formData.handle.trim()) {
+      toast.error("Handle is required");
+      return false;
+    }
+
+    if (!formData.role) {
+      toast.error("Please select a role");
+      return false;
+    }
+
+    // Password is optional while editing
+    if (
+      formData.password &&
+      formData.password.length < 6
+    ) {
       toast.error(
-        "Post title must be at least 5 characters"
+        "New password must be at least 6 characters"
       );
-      return false;
-    }
-
-    if (!formData.description.trim()) {
-      toast.error("Description is required");
-      return false;
-    }
-
-    if (formData.description.trim().length < 20) {
-      toast.error(
-        "Description must be at least 20 characters"
-      );
-      return false;
-    }
-
-    if (!formData.category) {
-      toast.error("Please select a category");
-      return false;
-    }
-
-    if (!formData.readTime.trim()) {
-      toast.error("Read time is required");
       return false;
     }
 
@@ -127,22 +137,29 @@ const EditPost = () => {
     try {
       setSaving(true);
 
-      await updatePostAdminApi(id, {
+      const updateData = {
         name: formData.name.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        readTime: formData.readTime.trim(),
-      });
+        email: formData.email.trim(),
+        handle: formData.handle.trim(),
+        role: formData.role,
+      };
 
-      toast.success("Post updated successfully");
+      // Only send password if admin entered a new password
+      if (formData.password.trim()) {
+        updateData.password = formData.password;
+      }
 
-      navigate("/admin/posts");
+      await updateAdminUserApi(id, updateData);
+
+      toast.success("User updated successfully");
+
+      navigate("/admin/users");
     } catch (error) {
-      console.error("UPDATE POST ERROR:", error);
+      console.error("UPDATE USER ERROR:", error);
 
       toast.error(
         error.response?.data?.message ||
-          "Failed to update post"
+          "Failed to update user"
       );
     } finally {
       setSaving(false);
@@ -160,16 +177,12 @@ const EditPost = () => {
             size={24}
             className="animate-spin"
           />
-
-          <span>Loading post...</span>
+          <span>Loading user...</span>
         </div>
       </div>
     );
   }
 
-  // ============================================
-  // UI
-  // ============================================
   return (
     <div className="flex-1 bg-slate-50 min-h-full">
       {/* ========================================
@@ -178,7 +191,7 @@ const EditPost = () => {
       <div className="bg-white border-b border-slate-200 px-6 py-5">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate("/admin/posts")}
+            onClick={() => navigate("/admin/users")}
             className="p-2 rounded-lg hover:bg-slate-100 transition"
           >
             <ArrowLeft size={20} />
@@ -186,11 +199,11 @@ const EditPost = () => {
 
           <div>
             <h1 className="text-2xl font-bold text-slate-900">
-              Edit Post
+              Edit User
             </h1>
 
             <p className="text-sm text-slate-500 mt-1">
-              Update your blog post information
+              Update user account information
             </p>
           </div>
         </div>
@@ -200,25 +213,25 @@ const EditPost = () => {
           FORM
       ======================================== */}
       <div className="p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
             {/* Form Header */}
             <div className="px-6 py-5 border-b border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <FileText
+                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <UserCog
                     size={20}
-                    className="text-blue-600"
+                    className="text-purple-600"
                   />
                 </div>
 
                 <div>
                   <h2 className="font-semibold text-slate-900">
-                    Post Information
+                    User Information
                   </h2>
 
                   <p className="text-sm text-slate-500">
-                    Update the details of your post
+                    Update the user's details below
                   </p>
                 </div>
               </div>
@@ -227,11 +240,11 @@ const EditPost = () => {
             <form onSubmit={handleSubmit}>
               <div className="p-6 space-y-6">
                 {/* ==================================
-                    POST TITLE
+                    NAME
                 ================================== */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Post Title
+                    Full Name
                   </label>
 
                   <input
@@ -239,100 +252,115 @@ const EditPost = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Enter post title"
+                    placeholder="Enter full name"
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-
-                  <p className="text-xs text-slate-500 mt-2">
-                    Minimum 5 characters
-                  </p>
                 </div>
 
                 {/* ==================================
-                    DESCRIPTION
-                ================================== */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Description
-                  </label>
-
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={6}
-                    placeholder="Write a short description of your post..."
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg outline-none resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-
-                  <div className="flex justify-between mt-2">
-                    <p className="text-xs text-slate-500">
-                      Minimum 20 characters
-                    </p>
-
-                    <p className="text-xs text-slate-400">
-                      {formData.description.length} characters
-                    </p>
-                  </div>
-                </div>
-
-                {/* ==================================
-                    CATEGORY + READ TIME
+                    EMAIL + HANDLE
                 ================================== */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Category */}
+                  {/* Email */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Category
+                      Email
                     </label>
 
-                    <select
-                      name="category"
-                      value={formData.category}
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">
-                        Select category
-                      </option>
-
-                      <option value="Engineering">
-                        Engineering
-                      </option>
-
-                      <option value="Architecture">
-                        Architecture
-                      </option>
-
-                      <option value="Frontend">
-                        Frontend
-                      </option>
-
-                      <option value="Database">
-                        Database
-                      </option>
-
-                      <option value="DevOps">
-                        DevOps
-                      </option>
-                    </select>
+                      placeholder="john@example.com"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                   </div>
 
-                  {/* Read Time */}
+                  {/* Handle */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Read Time
+                      Handle
                     </label>
 
                     <input
                       type="text"
-                      name="readTime"
-                      value={formData.readTime}
+                      name="handle"
+                      value={formData.handle}
                       onChange={handleChange}
-                      placeholder="e.g. 5 min read"
+                      placeholder="johndoe"
                       className="w-full px-4 py-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
+                </div>
+
+                {/* ==================================
+                    PASSWORD
+                ================================== */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    New Password
+                  </label>
+
+                  <div className="relative">
+                    <input
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Leave blank to keep current password"
+                      className="w-full px-4 py-3 pr-12 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPassword(
+                          (prev) => !prev
+                        )
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                    >
+                      {showPassword ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mt-2">
+                    Leave this field empty if you don't
+                    want to change the password.
+                  </p>
+                </div>
+
+                {/* ==================================
+                    ROLE
+                ================================== */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Role
+                  </label>
+
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="User">
+                      User
+                    </option>
+
+                    <option value="Admin">
+                      Admin
+                    </option>
+                  </select>
                 </div>
               </div>
 
@@ -343,7 +371,7 @@ const EditPost = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    navigate("/admin/posts")
+                    navigate("/admin/users")
                   }
                   disabled={saving}
                   className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition disabled:opacity-50"
@@ -367,7 +395,7 @@ const EditPost = () => {
                   ) : (
                     <>
                       <Save size={18} />
-                      Update Post
+                      Update User
                     </>
                   )}
                 </button>
@@ -380,4 +408,4 @@ const EditPost = () => {
   );
 };
 
-export default EditPost;
+export default EditAdminUser;

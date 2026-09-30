@@ -4,6 +4,7 @@ import cors from "cors";
 import authRoutes from "./routes/user.routes.js";
 import postsRoutes from "./routes/posts.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import adminUsersRoutes from "./routes/admin.users.routes.js";
 import { dbConnectionHandler } from "./utils/db.js";
 import cookieParser from "cookie-parser"
 
@@ -27,6 +28,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postsRoutes);
 app.use("/api/admin/posts", adminRoutes);
+app.use("/api/admin/users", adminUsersRoutes);
 
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {
